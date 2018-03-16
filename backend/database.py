@@ -71,7 +71,17 @@ def setupDatabase():
                           `time` varchar(50) NOT NULL, \
                           PRIMARY KEY (id) \
                         );"
-        setup_log["create_items_table"] = write(create_activity_table)
+        setup_log["create_activity_table"] = write(create_activity_table)
+
+        create_employee_table = "CREATE TABLE `employee` (\
+                          `id` int(11) NOT NULL AUTO_INCREMENT,\
+                          `name` varchar(80) NOT NULL,\
+                          Unique (name),\
+                          PRIMARY KEY (id) \
+                        );"
+        setup_log["create_employee_table"] = write(create_employee_table)
+        
+        
 
         create_inventory_table = """CREATE TABLE `inventory` (
                                   `barcode` varchar(30) NOT NULL,
@@ -99,6 +109,7 @@ def setupDatabase():
                              `customername` varchar(80) NOT NULL,\
                              `paymentmode` varchar(20) NOT NULL,\
                              `tip` double NOT NULL,\
+                             `name` varchar(80) NOT NULL,\
                               PRIMARY KEY (id)\
                              );"
         print(create_sales_table)
@@ -108,6 +119,7 @@ def setupDatabase():
         print(tip_addition)
         setup_log["alter_sales_table_tip_add"] = write(tip_addition)
 
+        
 
     except pymysql.err.InternalError:
         print("The Database is already setup")

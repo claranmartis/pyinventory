@@ -36,9 +36,7 @@ class ReportsLayout(FloatLayout):
                               pos_hint={'center_x': 0.14, 'center_y': 0.95})
         root.add_widget(self.company)
 
-        # self.stock_report = Button(text='Stock',
-        #                       size_hint=(0.2, 0.15),
-        #                       on_press=self.renderTableStock)
+        #stock button
         self.stock_report = Button(text='Stock',
                                    size_hint=(0.2, 0.15))
 
@@ -123,11 +121,11 @@ class ReportsLayout(FloatLayout):
             datalist = InventoryDB()
 
             datalist = datalist.getAllSales()
-            items = [["ID", "Barcode", "Item Name", "Date", "Quantity", "Selling Amount"]]
+            items = [["ID", "Item Name", "Date", "Quantity", "Selling Amount", "Tip", "Collected by"]]
             for i in datalist:
                 date = datetime.datetime.strptime(str(i.time[:10]), "%Y-%m-%d")
                 if selected_date_o == date:
-                    items.append([i.id, i.barcode, i.itemname, i.time[:11], i.quantity, i.amount])
+                    items.append([i.id, i.itemname, i.time[:11], i.quantity, i.amount, i.tip, i.name])
             reportstable.renderMatPlot(items)
         except ValueError:
             messagebox(title="Error", message="Please enter a valid date. \nPlease enter the date in dd/mm/yyyy format")

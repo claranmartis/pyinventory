@@ -138,9 +138,10 @@ class Sales:
     tip = None
     cash = None
     card = None
+    name = None
 
     def __init__(self, barcode, time, quantity, itemname, amount, category, invoice_no, customername, paymentmode,
-                 tip, cash, card, id=None):
+                 tip, cash, card, name, id=None):
         self.id = id
         self.barcode = barcode
         self.time = time
@@ -154,6 +155,7 @@ class Sales:
         self.tip = tip
         self.cash = cash
         self.card = card
+        self.name = name
 
     def save(self, insert=True, update=False):
         """
@@ -171,17 +173,17 @@ class Sales:
             if self.id == None:
                 raise InvalidId
             query = "UPDATE `sales` set `barcode`='{}',`time`='{}',`quantity`='{}',`itemname`='{}',`amount`='{}'," \
-                    "`invoice_no`='{}', `category`='{}', `customername`='{}',`paymentmode`='{}', `tip`='{}', `cash`='{}', `card`='{}', where id={};".format(
+                    "`invoice_no`='{}', `category`='{}', `customername`='{}',`paymentmode`='{}', `tip`='{}', `cash`='{}', `card`='{}', `name`='{}' where id={};".format(
                 self.barcode, self.time, self.quantity, self.itemname, self.amount, self.invoice_no, self.category,
-                self.customername, self.paymentmode,self.tip, self.cash, self.card,
+                self.customername, self.paymentmode,self.tip, self.cash, self.card, self.name,
                 self.id)
             print(query)
             result = write(query)
             return result
         elif insert == True:
             result = write(
-                "INSERT into `sales` (`barcode`,`time`,`quantity`,`itemname`,`amount`,`category`,`invoice_no`,`customername`,`paymentmode`,`tip`,`cash`,`card`) "
-                "values('{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}')".format(
+                "INSERT into `sales` (`barcode`,`time`,`quantity`,`itemname`,`amount`,`category`,`invoice_no`,`customername`,`paymentmode`,`tip`,`cash`,`card`,`name`) "
+                "values('{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}')".format(
                     self.barcode,
                     self.time,
                     self.quantity,
@@ -193,7 +195,8 @@ class Sales:
                     self.paymentmode,
                     self.tip,
                     self.cash,
-                    self.card
+                    self.card,
+                    self.name
                 ))
             return result
         else:
@@ -264,6 +267,70 @@ class Activity:
     def __str__(self):
         return self.activity + " " + str(self.id)
 
+class Employee:
+    
+    id = None
+    name = None
+    
+    def __init__(self, name):
+        self.id = id
+        self.name = name
+
+    def save(self, insert=True, update=False):
+        """
+        Saves / Updates an Item to the database
+
+        :param kwargs: Keyword arguments for deciding whether to save or update this item object
+        Keyword arguments:
+
+        update -- Updates the current object with current data
+        insert -- Inserts a data into the database with current data
+
+        :return: Number of affected rows
+        """
+        if update == True:
+            pass
+        elif insert == True:
+            result = write("INSERT into `employee` (`name`) values('{}')".format(
+                    self.name
+                    ))
+            return result
+        else:
+            raise InvalidKeyword
+
+    def remove(self):
+        """
+        Removes an item from the database
+        :return:
+        """
+        write("DELETE FROM `activity` WHERE `id`='{}'".format(self.id))
+
+    def __str__(self):
+        return self.activity + " " + str(self.id)
+
+    def getEmployeeName(self):
+        '''
+            get all employee namess
+        '''
+        items = read("SELECT * FROM employee")
+        items_=[]
+        for i in items:
+            anItem =  name=i["name"]
+            items_.append(anItem)
+
+        return items_
+
+    def getEmployeeName_givenName(self,name):
+        items = read("SELECT name FROM employee where `name`='{}'".format(name))
+        items_=[]
+        for i in items:
+            name_=i["name"]
+            anItem =  name
+            items_.append(anItem)
+
+        return items_
+    
+        
 
 import datetime
 
@@ -344,7 +411,25 @@ class InventoryDB:
             anItem = Sales(barcode=i["barcode"], time=i["time"], quantity=i["quantity"], itemname=i["itemname"],
                            amount=i["amount"], category=i["category"],
                            id=i["id"], invoice_no=i["invoice_no"], customername=i["customername"],
-                           paymentmode=i["paymentmode"],tip=i["tip"], cash=i["cash"], card=i["card"])
+                           paymentmode=i["paymentmode"],tip=i["tip"], cash=i["cash"], card=i["card"], name=i["name"])
             items_.append(anItem)
 
         return items_
+
+    def getTipSummary(self):
+        #employee = read("SELECT name FROM employee")
+        #names = []
+        tips = {}
+        items = read("SELECT * FROM sales where 1")
+        for i in items:
+            #names.append(i["name"])
+            if(i["tip"]!=0):
+                try:
+                    tips[i["name"]] = float(tips[i["name"]]) + float(i["tip"])
+                except:
+                    tips[i["name"]] = float(i["tip"])
+        return(tips)
+        
+        
+
+    

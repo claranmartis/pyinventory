@@ -39,6 +39,14 @@ class CategoriesLayout(FloatLayout):
                               pos_hint={'center_x': 0.15, 'center_y': 0.95})
         root.add_widget(self.company)
 
+        # add employee button
+        self.add_employee = Button(text='Add employee',
+                         size_hint=(0.2, 0.15),
+                         pos_hint={'center_x': 0.8, 'center_y': 0.1})
+        root.add_widget(self.add_employee)
+
+
+
         # shampoo button
         self.button_shampoo = Button(text='Shampoo',
                                      size_hint=(0.2, 0.15),

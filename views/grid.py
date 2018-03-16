@@ -31,12 +31,7 @@ class EditableTable(Screen):
         # table_layout.bind(size=self._update_rect, pos=self._update_rect)
         length = len(dataList[0])
 
-        #
-        # for record in dataList:
-        #
-        #     for p, column in enumerate(record):
-        #         if len(str(column)) > sizes[p]:
-        #             sizes[p] = len(str(column)) + 3
+ 
         self.company = Button(text='Back|',
                               color=(0, 0, 0, 1),
                               background_color=(0, 0, 0, 0),
@@ -177,16 +172,21 @@ class ReadOnlyTable(Screen):
         table_layout.add_widget(
             Button(text="Show stats", size_hint_y=None, height=50, font_size=10, on_press=self.stats))
 
+        self.show_tip_btn = Button(text="Tip Summary", size_hint_y=None, size_hint=(0.2, None), height=50,
+                                       font_size=16,
+                                       on_press=self.show_tip_details)
+        table_layout.add_widget(self.show_tip_btn)
+
         forsales = dataList[1:]
         total_sale = 0
         for d in forsales:
             total_sale = total_sale + float(d[5])
-        table_layout.add_widget(Label(text="", size_hint_y=None, height=50))
+        #table_layout.add_widget(Label(text="", size_hint_y=None, height=50))
         table_layout.add_widget(
-            Label(text="Total Sales: ${}".format(total_sale), size_hint_y=None, height=50,
+            Label(text="", size_hint_y=None, height=50,
                   color=(0, 0, 0, 1), font_size=15))
-        self.show_details_btn = Button(text="Show Details", size_hint_y=None, size_hint=(0.1, None), height=50,
-                                       font_size=10,
+        self.show_details_btn = Button(text="    Sales\nSummary", size_hint_y=None, size_hint=(0.2, None), height=50,
+                                       font_size=16,
                                        on_press=self.show_sale_details)
         table_layout.add_widget(self.show_details_btn)
         i = 0
@@ -251,6 +251,7 @@ class ReadOnlyTable(Screen):
 
         self.add_widget(parent_layout)
 
+
     def _update_rect(self, instance, value):
         self.rect.pos = instance.pos
         self.rect.size = instance.size
@@ -258,15 +259,26 @@ class ReadOnlyTable(Screen):
     def show_sale_details(self, button):
         card_sales = 0.0
         cash_sales = 0.0
+        tip = 0.0
+        cash_collected = 0.0
+        card_collected = 0.0
+        datalist1 = InventoryDB()
+        datalist1 = datalist1.getAllSales()
+        for i in datalist1:
+            card_collected = card_collected + i.card
+            cash_collected = cash_collected + i.cash
+            tip = tip + i.tip
+        
         # print(self.dataList)
         for d in self.dataList:
             if d[1] == "cash" or d[1] == "":
                 cash_sales = cash_sales + float(d[3])
             elif d[1] == "card":
                 card_sales = card_sales + float(d[3])
+        
 
-        total_sales = card_sales + cash_sales
-        message_text = "By Cash : {}\n\nBy Card : {}\n\n__________________________\nTotal Sales : {}".format(cash_sales, card_sales, total_sales)
+        total_sales = card_collected + cash_collected
+        message_text = "By Cash : {}\n\nBy Card : {}\n\n__________________________\nTotal Sales : {} \nTotal Tip : {}".format(cash_collected, card_collected, total_sales, tip)
         messagebox(title="Sales Details", message=message_text)
 
     def back(self, event):
@@ -338,6 +350,27 @@ class ReadOnlyTable(Screen):
             plt.show()
 
         plot_bar_x()
+
+    def show_tip_details(self, button):
+        tip = {}
+        employee = []
+        datalist1 = InventoryDB()
+        msg = ''
+        msg_ = datalist1.getTipSummary()
+        print(msg_)
+        for m in msg_:
+            msg = msg.join(m)
+        
+        
+        message_text = "Tip Summary\n : " + str(msg_)
+        messagebox(title="Sales Details", message=message_text)
+        
+        def back(self, event):
+            self.manager.current = "reports"
+            self.manager.remove_widget(self)
+
+
+
 
 
 class ROTable(Screen):

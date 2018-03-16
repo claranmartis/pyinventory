@@ -12,10 +12,11 @@ from kivy.uix.popup import Popup
 from kivy.uix.textinput import TextInput
 from kivy.uix.label import Label
 from kivy.uix.scrollview import ScrollView
+from kivy.uix.dropdown import DropDown
 
 from backend.utils import messagebox, generateInvoiceNumber
 import json
-from backend.models import InventoryDB, Sales, log
+from backend.models import InventoryDB, Sales, log, Employee
 from backend.utils import send_mail
 from backend.database import *
 from backend import config
@@ -52,6 +53,7 @@ class SalesPageLayout(FloatLayout):
                           pos_hint={'center_x': 0.175, 'center_y': 0.7})
         root.add_widget(label_qty)
 
+        # Price text box
         self.selling_price = TextInput(hint_text="Selling Price",
                                        size_hint=(0.2, 0.075),
                                        multiline=False,
@@ -101,6 +103,8 @@ class SalesPageLayout(FloatLayout):
 
         # Enter button
         enter_btn = Button(text='Enter',
+                           color = (0,0,0,1),
+                            background_color=(0, 0, 0, 0.25),
                            size_hint=(0.15, 0.1),
                            pos_hint={'right': 0.95, 'center_y': 0.8})
 
@@ -131,8 +135,8 @@ class SalesPageLayout(FloatLayout):
 
                             self.basket.append(obj)
                             # label1.text = label1.text + self.bar_str + self.qty_str + '\nEntered\n'
-                            self.label1.text = self.label1.text + """ Barcode : {} | Item Name : {} | Quantity : {} | Amount : {}""".format(
-                                obj["barcode"], obj["Item Name"], obj["quantity"], obj["amount"]) + "\n"
+                            self.label1.text = self.label1.text + """Item Name : {} | Quantity : {} | Amount : {}""".format(
+                                obj["Item Name"], obj["quantity"], obj["amount"]) + "\n"
                             self.barcode_text.text = ""
                             self.quantity_.text = "1"
 
@@ -150,12 +154,42 @@ class SalesPageLayout(FloatLayout):
             except smtplib.SMTPServerDisconnected:
                 print("Internet Not connected")
 
-        self.barcode_text.bind(on_text_validate=enter_btn_pressed)
+        def fill_price(instance):
+            try:
+                # in response of barcode entry
+                barcode_ = self.barcode_text.text
+                quantity_text = int(self.quantity_.text)
+                if len(barcode_) == 0:
+                    messagebox(title='Warning', message="Please enter the barcode")
+                    return
+                else:
+                    barcode_ = int(barcode_)
+                    record = InventoryDB().getInventoryRecodeByBarcode(barcode=barcode_)
+                    if len(record) == 0:
+                        messagebox(title="Error", message="No such item with {} barcode exists".format(barcode_))
+                        return
+                    else:
+                        record = record[0]
+                        print(record.quantity >= quantity_text and record.category == "SERVICE")
+                        if record.quantity >= quantity_text or record.category == "SERVICE":
+                            total_price = float(record.price) * float(quantity_text)
+                        self.selling_price.text = str(record.price)
+
+            except TypeError:
+                messagebox(title="Failed", message="Quantity must be a Numeric value")
+            except ValueError:
+                messagebox(title="Failed", message="Quantity must be a Numeric value")
+            except smtplib.SMTPServerDisconnected:
+                print("Internet Not connected")
+
+        self.barcode_text.bind(on_text_validate=fill_price)
         enter_btn.bind(on_press=enter_btn_pressed)
         root.add_widget(enter_btn)
 
         # Clear button
         clear_btn = Button(text='Clear',
+                           color = (0,0,0,1),
+                            background_color=(0, 0, 0, 0.25),
                            size_hint=(0.15, 0.1),
                            pos_hint={'right': 0.95, 'center_y': 0.7})
 
@@ -168,18 +202,19 @@ class SalesPageLayout(FloatLayout):
 
         # To finish entry and get the final total.
         done_btn = Button(text='Done',
+                          color = (0,0,0,1),
+                            background_color=(0, 0, 0, 0.25),
                           size_hint=(0.2, 0.15),
                           pos_hint={'center_x': 0.5, 'center_y': 0.2})
 
-        # def callback2(instance):
-        #     label1.text = label1.text + '\n Done'
 
-        # done_btn.bind(on_press=self.sellAll)
         done_btn.bind(on_press=self.sellPopUp)
         root.add_widget(done_btn)
 
         # add item
         self.button_add = Button(text='+',
+                                 color = (0,0,0,1),
+                                   background_color=(0, 0, 0, 0.25),
                                  size_hint=(0.15, 0.1),
                                  pos_hint={'right': 0.85 - 0.01, 'center_y': 0.075})
 
@@ -188,6 +223,8 @@ class SalesPageLayout(FloatLayout):
 
         # search button
         self.button_search = Button(text='Search',
+                                    color = (0,0,0,1),
+                                   background_color=(0, 0, 0, 0.25),
                                     size_hint=(0.15, 0.1),
                                     pos_hint={'right': 0.16, 'center_y': 0.075}
                                     )
@@ -196,6 +233,8 @@ class SalesPageLayout(FloatLayout):
 
         # reports
         self.button_report = Button(text='Reports',
+                                    color = (0,0,0,1),
+                                   background_color=(0, 0, 0, 0.25),
                                     size_hint=(0.15, 0.1),
                                     pos_hint={'right': 1 - 0.01, 'center_y': 0.075})
 
@@ -260,7 +299,7 @@ class SalesPageLayout(FloatLayout):
                 sell = Sales(barcode=barcodetext, time=str(datetime.datetime.now()), quantity=quantity_,
                              itemname=sellable.itemname, amount=sold_price, category=sellable.category,
                              invoice_no=invoice_no, customername=customername, paymentmode=paymentmode,tip=tip,
-                             cash=self.cash_amt, card=self.card_amt)
+                             cash=self.cash_amt, card=self.card_amt, name=self.sty_name)
                 sold = sell.save(insert=True)
                 tip = tip - tip
                 if saved == 1 and sold == 1:
@@ -367,22 +406,43 @@ class SalesPageLayout(FloatLayout):
         submit = Button(size_hint=(0.2, 0.3), pos_hint={'x': .4, 'y': 0.2}, text="Done")
         cancelbtn = Button(size_hint=(0.2, 0.2), pos_hint={'x': .8}, text="Cancel")
 
+        tip_layout = BoxLayout(orientation="horizontal",size_hint=(1, 0.2))
+
+        stylists = Employee.getEmployeeName('x')
+
+        stylist = DropDown()
+
+        for index in range(len(stylists)):
+            btn = Button(text=stylists[index], size_hint_y=None, height=44)
+            btn.bind(on_release=lambda btn: stylist.select(btn.text))
+            stylist.add_widget(btn)
+
+        self.mainbutton = Button(text='Select Stylists', size_hint=(0.4, 1))
+        self.mainbutton.bind(on_release=stylist.open)
+
+        stylist.bind(on_select=lambda instance, x: setattr(self.mainbutton, 'text', x))
+        
+
         def tipTextChange(tip):
             print(tip.text)
             try:
                 if float(tip.text):
                     payment_method.total = payment_method.total + float(tip.text)
+                    
             except:
                 tip.text = ""
+                #tip_layout.remove_widget(self.mainbutton)
 
-        tip = TextInput(size_hint=(0.4, 0.3), hint_text="Tip", multiline=False)
+        tip = TextInput(size_hint=(0.5, 1), hint_text="Tip", multiline=False)
+        tip_layout.add_widget(tip)
+        tip_layout.add_widget(self.mainbutton)
 
         message = "Invoice # {} \n Total Amount ${}".format(invoice_no, payment_method.total)
         msg_label = Label(text=message, size_hint=(None, 0.3), pos_hint={'x': .4})
         customer_name = TextInput(size_hint=(1, None), hint_text="Customer Name", multiline=False)
 
         sellDialog.add_widget(cancelbtn)
-        sellDialog.add_widget(tip)
+        sellDialog.add_widget(tip_layout)
         sellDialog.add_widget(customer_name)
 
         tip.bind(on_text=tipTextChange)
@@ -458,7 +518,11 @@ class SalesPageLayout(FloatLayout):
         def close_btn(event):
             print(payment_method.Flag1)
             print(customer_name.text, payment_method.method)
-            
+            if(self.mainbutton.text=='Select Stylists'):
+                self.sty_name = 'Reception'
+            else:
+                self.sty_name = self.mainbutton.text
+                print(self.mainbutton.text)
             
             tip_ = 0
             try:

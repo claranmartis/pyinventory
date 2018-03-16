@@ -1,4 +1,5 @@
 import views.add_item
+import views.add_name
 import views.main_page
 import views.categories_kivy
 import views.reports_kivy
@@ -46,6 +47,10 @@ class CategoryScreen(Screen):
         layout.button_color.bind(on_press=self.toAddItemColor)
         layout.button_Misc.bind(on_press=self.toAddItemMisc)
         layout.button_services.bind(on_press=self.toAddItemServices)
+        layout.add_employee.bind(on_press=self.toAddEmployee)
+
+    def toAddEmployee(self,event):
+        self.manager.current = "addEmployee"
 
     def to_home(self, event):
         self.manager.current = "sales"
@@ -160,7 +165,7 @@ class ReportScreen(Screen):
 
             datalist = datalist.getAllSales()
 
-            items = [["Invoice No", "Barcode", "Item Name", "Date", "Quantity", "Selling Amount", "Category","Payment Method","Tip"]]
+            items = [["Item Name", "Date", "Quantity", "Selling Amount", "Category", "Tip", "Collected by"]]
 
             selected_date_o = datetime.datetime.strptime(self.layout.selected_date, "%d/%m/%Y")
             selected_date_to = datetime.datetime.strptime(self.layout.to_selected_date, "%d/%m/%Y")
@@ -168,15 +173,14 @@ class ReportScreen(Screen):
             for i in datalist:
                 date = datetime.datetime.strptime(str(i.time[:10]), "%Y-%m-%d")
                 if date>= selected_date_o and date<=selected_date_to:
-                    items.append([i.invoice_no, i.barcode, i.itemname, i.time[:11], i.quantity, i.amount, i.category,i.paymentmode,i.tip])
+                    items.append([i.itemname, i.time[:11], i.quantity, i.amount, i.category, i.tip, i.name])
 
             if len(items) == 1:
                 messagebox(title="Oops", message="No data to show")
             else:
                 self.manager.add_widget(views.grid.ReadOnlyTable(dataList=items, title="Sales Details"))
                 self.manager.current = "readonlytable"
-        # except TypeError:
-        #     messagebox(title="Error", message="No data to show")
+
 
     def renderTableStock(self, event):
         try:
@@ -196,7 +200,19 @@ class ReportScreen(Screen):
                 dataList=items))
         except ValueError:
             messagebox(title="Error", message="Please enter a valid date. \nPlease enter the date in dd/mm/yyyy format")
+class AddEmployeeScreen(Screen):
+    
+    def __init__(self, **kwargs):
+        self.name = "addEmployee"
+        super(AddEmployeeScreen, self).__init__()
+        l = views.add_name.AddEmployee()
+        l.company.bind(on_press=self.toHome)
+        self.add_widget(l)
 
+    def toHome(self, event):
+        self.manager.current = "sales"
+
+        
 
 class InventoryScreens(ScreenManager):
     def __init__(self):
@@ -204,12 +220,9 @@ class InventoryScreens(ScreenManager):
 
         self.add_widget(SalesScreen(name="sales"))
         self.add_widget(CategoryScreen(name="categories"))
-        # self.add_widget(AddItemScreen(name="additems"))
+        self.add_widget(AddEmployeeScreen(name="addEmployee"))
         self.add_widget(ReportScreen(name="reports"))
-        # self.add_widget(views.grid.EditableTable(
-        #     dataList=[["ID", "Barcode", "Item Name", "Date", "Quantity", "Selling Amount"],
-        #               ["1", "123445", "Name", "12/02/2017", "45", "10"],
-        #               ]))
+
 
 
 class InventoryApp(App):

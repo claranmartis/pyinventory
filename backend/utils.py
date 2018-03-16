@@ -45,7 +45,9 @@ def generateInvoiceNumber():
     '''
     SN = (read('SELECT MAX(id) as id FROM sales;'))
     ID = SN[0]
+    if(ID['id'] == None):
+        ID['id'] = 0
     today = datetime.datetime.strftime(datetime.datetime.now(), "%d%m%Y%H%M%S")
     #invoicenumber = "{}/{}".format(config.COMPUTER_ID, today)
-    invoicenumber = "{}{}{}".format(config.COMPUTER_ID, today, ID['id'])
+    invoicenumber = "{}{}{}".format(config.COMPUTER_ID, today, int(ID['id'])+1)
     return invoicenumber
