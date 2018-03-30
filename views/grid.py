@@ -356,13 +356,21 @@ class ReadOnlyTable(Screen):
         employee = []
         datalist1 = InventoryDB()
         msg = ''
+        nl = '\n'
+        total_tip = 0.0
         msg_ = datalist1.getTipSummary()
         print(msg_)
-        for m in msg_:
-            msg = msg.join(m)
+        lst_keys = list(msg_.keys())
+        print(lst_keys)
+        for m in lst_keys:
+            n = str(msg_[m])
+            msg = msg + m + ':' + '      $'
+            msg = msg + n
+            msg = msg + nl
+            total_tip += float(n)
+                
         
-        
-        message_text = "Tip Summary\n : " + str(msg_)
+        message_text = "Tip Summary\n ________________ \n" + msg + '________________\nTotal:    $' + str(total_tip)
         messagebox(title="Sales Details", message=message_text)
         
         def back(self, event):
